@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+
+    <script type="module">
+      //渲染三位对象
+      //添加three.js坐标轴，光源，和阴影效果
+      //添加three.js动销，简化实验，自适应
+
+      import {
+        Scene,
+        PerspectiveCamera,
+        WebGLRenderer,
+        BoxGeometry,
+        MeshBasicMaterial,
+        Mesh,
+        AxesHelper,
+        PlaneGeometry,
+        MeshLambertMaterial,
+        AmbientLight,
+        SpotLight,
+        Vector2,
+        Fog,
+        FogExp2,
+        TorusGeometry,
+        CylinderGeometry,
+        BufferGeometry,
+        BufferAttribute,
+        DoubleSide,
+        WireframeGeometry,
+        LineSegments
+      } from "./libs/three.js/src/three.js";
+
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new Scene();
+     
+     
+      //雾化效果1
+      //   scene.fog = new Fog(0xff0000, 0.01, 100);
+      //雾化效果2
+      //   scene.fog = new FogExp2(0x0000ff, 0.02);
+      //强制场景中的所有物体使用相同的材质
+    //   scene.overrideMaterial = new MeshLambertMaterial({color:0x0000ff})
+
+    //相机
+      var camera = new PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //渲染器
+      var render = new WebGLRenderer();
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //添加cube盒子1
+      var geometry = new BoxGeometry(8, 8, 8); //几何体
+      // var material = new MeshBasicMaterial({color:0xff2288});
+      var material = new MeshLambertMaterial({ color: 0xff2288 }); //网格
+      var cube = new Mesh(geometry, material);
+      scene.add(cube);
+      //cube盒子1位置
+      cube.castShadow = true; //盒子阴影
+      cube.position.x = 4;
+      cube.position.y = 10;
+      cube.position.z = 20;
+      // cube.rotation.x += 0.80;
+      // cube.rotation.y += 0.80;
+
+      //添加cube盒子2
+      var geometry2 = new BoxGeometry(4, 4, 4);
+      // var material = new MeshBasicMaterial({color:0xff2288});
+      var material2 = new MeshLambertMaterial({ color: 0x00ff00 });
+      var cube2 = new Mesh(geometry2, material2);
+      cube2.castShadow = true; //盒子阴影
+      //cube盒子2位置
+      cube2.position.x = 0;
+      cube2.position.y = 14;
+      cube2.position.z = -10;
+      cube2.name = "cube2";
+      scene.add(cube2);
+
+
+      //添加cube盒子show
+      var showGeo = new BoxGeometry(4, 4, 4);
+      // var material = new MeshBasicMaterial({color:0xff2288});
+      var showmaterial = new MeshLambertMaterial({ color: 0x76d7ea });
+      var showcube = new Mesh(showGeo, showmaterial);
+      showcube.castShadow = true; //盒子阴影
+      showcube.position.x = 0;
+      showcube.position.y = 14;
+      showcube.position.z = 0;
+      scene.add(showcube);
+
+      //圆环几何体
+      var torusgeo = new TorusGeometry(10,2,10,10);
+      var torusmaterial = new MeshLambertMaterial({color:0xff2288});
+      var torus = new Mesh(torusgeo,torusmaterial);
+      torus.castShadow= true;
+      torus.position.x=0;
+      torus.position.y = 10;
+      torus.position.z = -10;
+      scene.add(torus);
+
+      //圆柱几何体
+      var cylindergeo = new CylinderGeometry(4,4,14);
+      var cylindermaterial = new MeshLambertMaterial({color:0xff2288});
+      var cylinder = new Mesh(cylindergeo,cylindermaterial)
+      cylinder.castShadow= true;
+      cylinder.position.x=-20;
+      cylinder.position.y = 10;
+      cylinder.position.z = -10;
+      scene.add(cylinder);
+
+      //自定义几何体
+      var geometry = new BufferGeometry;
+      var vertices = new Float32Array([
+          0,0,10,
+          10,0,10,
+          0,10,10,
+          10,0,10,
+          0,10,10,
+          10,10,10,
+      ]);
+      var attribute = new BufferAttribute(vertices,3);
+      geometry.attributes.position = attribute;
+      var material = new MeshBasicMaterial({
+          color:0x0000ff,
+          side:DoubleSide,
+      })
+      var mesh = new Mesh(geometry,material);
+      scene.add(mesh);
+    //   网格
+      var wireFrame = new WireframeGeometry(geometry);
+      var line = new LineSegments(wireFrame);
+      line.material.depthTest = false;
+    //   line.material.transparent = true;
+    //   line.material.opacity = 1;
+      scene.add(line);
+
+
+ 
+
+
+      //查找对象getObjectByNam
+      var findObj = scene.getObjectByName("cube2", false);
+      console.log(findObj.position); //打印该对象的相关属性
+
+      // 显示对象有多少个
+      console.log(scene.children.length);
+
+      //设置机位
+      camera.position.x = -30;
+      camera.position.y = 45;
+      camera.position.z = 35;
+      camera.lookAt(scene.position);
+
+      //地面和阴影
+      var planeGeometry = new PlaneGeometry(100, 100);
+      var planeMaterial = new MeshLambertMaterial({ color: 0xcccccc });
+      var plane = new Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -0.5 * Math.PI;
+      plane.position.set(15, 0, 0);
+      plane.receiveShadow = true; //盒子接收阴影
+      scene.add(plane);
+
+      //lambert光源的颜色会应用到整个场景中的对象，不能作为唯一的光源来使用
+      var ambientLight = new AmbientLight(0x2d2d2d2d);
+      scene.add(ambientLight);
+
+      //加入能产生阴影的光源
+      var spotLight = new SpotLight(0xffffff);
+      spotLight.position.set(-60, 40, -65);
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize = new Vector2(1024, 1024);
+      spotLight.shadow.camera.far = 130;
+      spotLight.shadow.camera.near = 40;
+      scene.add(spotLight);
+
+      //增加ambient光
+      var ambientLight = new AmbientLight(0xcccccc);
+      scene.add(ambientLight);
+
+      //调用addStats方法
+      var stats = addStats();
+
+      //动态将场景中的物体删除
+      function removeFindCube() {
+        if (findObj instanceof Mesh) {
+          scene.remove(findObj);
+        }
+      }
+
+      //动态添加场景中的物体
+      function addNewCube() {
+        var geometryTemp = new BoxGeometry(4, 4, 4);
+        // var material = new MeshBasicMaterial({color:0xff2288});
+        var materialTemp = new MeshLambertMaterial({ color: 0x0000ff });
+        var cubeTemp = new Mesh(geometryTemp, materialTemp);
+        cubeTemp.castShadow = true; //盒子阴影
+
+        cubeTemp.position.x = Math.random() * 10;
+        cubeTemp.position.y = Math.random() * 10;
+        cubeTemp.position.z = Math.random() * 10;
+        scene.add(cubeTemp);
+      }
+
+      //创建一个删除cube盒子的控制台
+      // var ctrlObj = new function(){
+      //     this.removeFindCube = function(){
+      //         if(findObj instanceof Mesh){
+      //             scene.remove(findObj);
+      //         }
+      //     }
+      // }
+      // var ctrl = new dat.GUI();
+      // ctrl.add(ctrlObj,"removeFindCube");
+
+    //   几何体的克隆方法
+        function clone(){
+            var cloneGeometry = mesh.geometry.clone();
+              var clonematerial = new MeshBasicMaterial({
+                  color:0xff0000,
+                  side:DoubleSide,
+              });
+
+              var clonemesh = new Mesh(cloneGeometry, clonematerial);
+              clonemesh.translateZ(20);
+              clonemesh.name = "copy";
+              scene.remove(scene.getChildByName("copy"));
+              scene.add(clonemesh);
+
+        }
+
+
+
+      //创建一个控制带的属性
+      var ctrlObj = {
+        rotationSpeed: 0,
+        jumpSpeed: 0,
+        removeFindCube,
+        addNewCube,
+        scaleX:1,
+        scaleY:1,
+        scaleZ:1,
+        positionX:0,
+        positionY:14,
+        positionZ:0,
+        rotationX:0,
+        rotationY:0,
+        rotationZ:0,
+        visible:true,
+      };
+      var ctrl = new dat.GUI();
+      ctrl.add(ctrlObj, "rotationSpeed", 0, 1);
+      ctrl.add(ctrlObj, "jumpSpeed", 0, 1);
+      ctrl.add(ctrlObj, "removeFindCube");
+      ctrl.add(ctrlObj, "addNewCube");
+      ctrl.add(new function(){ //几何体克隆方法
+          this.clone = function(){
+              var cloneGeometry = mesh.geometry.clone();
+              var clonematerial = new MeshBasicMaterial({
+                  color:0xff0000,
+                  side:DoubleSide,
+              });
+              var clonemesh = new Mesh(cloneGeometry, clonematerial);
+              clonemesh.translateZ(20);
+              clonemesh.name = "copy";
+              scene.remove(scene.getChildByName("copy"));
+              scene.add(clonemesh);
+          }
+      },"clone");
+      //改变showcube大小,位置和旋转
+      ctrl.add(ctrlObj,"scaleX",0.5,10);
+      ctrl.add(ctrlObj,"scaleY",0.5,10);
+      ctrl.add(ctrlObj,"scaleZ",0.5,10);
+      ctrl.add(ctrlObj,"positionX",-30,30);
+      ctrl.add(ctrlObj,"positionY",-30,30);
+      ctrl.add(ctrlObj,"positionZ",-30,30);
+      ctrl.add(ctrlObj,"rotationX",-30,30);
+      ctrl.add(ctrlObj,"rotationY",-30,30);
+      ctrl.add(ctrlObj,"rotationZ",-30,30);
+      ctrl.add(ctrlObj,"visible",true);
+
+
+      // render.render(scene,camera)
+      renderScene();
+
+      //封装刷新页面的方法
+      var gap = 0;
+      function renderScene() {
+        // //盒子旋转跳跃效果
+        // cube.rotation.x+=0.01;
+        // cube.rotation.y+=0.01;
+        // cube.rotation.z+=0.01;
+
+        //使用dat.gui设置速度
+        // cube.rotation.x += ctrlObj.rotationSpeed;
+        // cube.rotation.y += ctrlObj.rotationSpeed;
+        // cube.rotation.z += ctrlObj.rotationSpeed;
+
+        //跳跃的间距
+        gap += ctrlObj.jumpSpeed;
+        cube.position.x = 25 + 20 * Math.sin(gap);
+        cube.position.y = 6 + 20 * Math.abs(Math.cos(gap));
+
+        //改变showcube的属性
+        showcube.scale.set(ctrlObj.scaleX,ctrlObj.scaleY,ctrlObj.scaleZ);
+        showcube.position.set(ctrlObj.positionX,ctrlObj.positionY,ctrlObj.positionZ);
+        showcube.rotation.set(ctrlObj.rotationX,ctrlObj.rotationY,ctrlObj.rotationZ);
+        showcube.visible=ctrlObj.visible;
+
+        stats.update(); //调用stats方法
+        //遍历调用者以及调用者的所有后代
+        scene.traverse(function (obj) {
+          if (obj instanceof Mesh && obj != plane) {
+            obj.rotation.x += ctrlObj.rotationSpeed;
+            obj.rotation.y += ctrlObj.rotationSpeed;
+            obj.rotation.z += ctrlObj.rotationSpeed;
+          }
+        });
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      //获取动画帧数统计对象
+      function addStats() {
+        var stats = new Stats();
+        stats.domElement.style.position = "absolute";
+        stats.domElement.style.left = "0px";
+        stats.domElement.style.top = "0px";
+        stats.setMode(0);
+
+        document.getElementById("myStats").appendChild(stats.domElement);
+        return stats;
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import {
+        Scene,
+        PerspectiveCamera,
+        WebGLRenderer,
+        BoxGeometry,
+        MeshBasicMaterial,
+        Mesh,
+        AxesHelper,
+        PlaneGeometry,
+        MeshLambertMaterial,
+        AmbientLight,
+        SpotLight,
+        Vector2,
+        Fog,
+        FogExp2,
+        TorusGeometry,
+        CylinderGeometry,
+        BufferGeometry,
+        BufferAttribute,
+        DoubleSide,
+        WireframeGeometry,
+        LineSegments,
+      } from "./libs/three.js/src/three.js";
+
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new Scene();
+      //相机
+      var camera = new PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //渲染器
+      var render = new WebGLRenderer();
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //设置机位
+      camera.position.x = -30;
+      camera.position.y = 45;
+      camera.position.z = 35;
+      camera.lookAt(scene.position);
+
+      //地面和阴影
+      var planeGeometry = new PlaneGeometry(100, 100);
+      var planeMaterial = new MeshLambertMaterial({ color: 0xcccccc });
+      var plane = new Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -0.5 * Math.PI;
+      plane.position.set(15, 0, 0);
+      plane.receiveShadow = true; //盒子接收阴影
+      scene.add(plane);
+
+      //lambert光源的颜色会应用到整个场景中的对象，不能作为唯一的光源来使用
+      var ambientLight = new AmbientLight(0x2d2d2d2d);
+      scene.add(ambientLight);
+
+      //加入能产生阴影的光源
+      var spotLight = new SpotLight(0xffffff);
+      spotLight.position.set(-60, 40, -65);
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize = new Vector2(1024, 1024);
+      spotLight.shadow.camera.far = 130;
+      spotLight.shadow.camera.near = 40;
+      scene.add(spotLight);
+
+      //增加ambient光
+      var ambientLight = new AmbientLight(0xcccccc);
+      scene.add(ambientLight);
+
+      //调用addStats方法
+      var stats = addStats();
+       //获取动画帧数统计对象
+       function addStats() {
+        var stats = new Stats();
+        stats.domElement.style.position = "absolute";
+        stats.domElement.style.left = "0px";
+        stats.domElement.style.top = "0px";
+        stats.setMode(0);
+
+        document.getElementById("myStats").appendChild(stats.domElement);
+        return stats;
+      }
+      
+
+
+      //渲染页面
+      // render.render(scene,camera)
+      renderScene();
+
+      //封装刷新页面的方法
+      var gap = 0;
+      function renderScene() {
+        stats.update(); //调用stats方法
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+     
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>
