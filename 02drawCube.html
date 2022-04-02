@@ -189,9 +189,9 @@
       scene.add(plane);
 
       //lambert光源的颜色会应用到整个场景中的对象，不能作为唯一的光源来使用
-      var ambientLight = new AmbientLight(0x2d2d2d2d);
+      var ambientLight = new AmbientLight(0xcccccc);
       scene.add(ambientLight);
-
+      
       //加入能产生阴影的光源
       var spotLight = new SpotLight(0xffffff);
       spotLight.position.set(-60, 40, -65);
@@ -201,9 +201,6 @@
       spotLight.shadow.camera.near = 40;
       scene.add(spotLight);
 
-      //增加ambient光
-      var ambientLight = new AmbientLight(0xcccccc);
-      scene.add(ambientLight);
 
       //调用addStats方法
       var stats = addStats();

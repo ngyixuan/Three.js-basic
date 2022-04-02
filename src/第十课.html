@@ -1,0 +1,208 @@
+<!--本课视频地址 10 -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>动力IT实训-threejs-010</title>
+    <meta charset="UTF-8" />
+    <!-- <script type="module" charset="UTF-8" src="../../libs/three.js/Three.js"></script> -->
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!--我们将把threejs渲染的效果显示在这个div中-->
+    <div id="puiedu-webgl-output"></div>
+
+    <div id="myStats"></div>
+
+    <script type="module">
+      // import {Scene,PerspectiveCamera,OrthographicCamera,WebGLRenderer,BoxGeometry,
+      //         MeshBasicMaterial,Mesh,PlaneGeometry,MeshLambertMaterial,
+      //         AmbientLight,SpotLight,Vector2,AxesHelper,Color,Fog,FogExp2,
+      //         TorusGeometry,CylinderGeometry,BufferGeometry,BufferAttribute,
+      //         DoubleSide,WireframeGeometry,LineSegments,
+      //         SpotLightHelper,CameraHelper} from "../../libs/three.js/three.js"
+
+      import * as THREE from "../../libs/build/three.module.js";
+      import { dat } from "../../libs/dat.gui/dat.gui.js";
+      import { GLTFLoader } from "../../libs/three.js/jsm/loaders/GLTFLoader.js";
+      import { OrbitControls } from "../../libs/three.js/jsm/controls/OrbitControls.js";
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+
+      document
+        .getElementById("puiedu-webgl-output")
+        .appendChild(render.domElement);
+
+      // show axes in the screen
+      var axes = new THREE.AxesHelper(50);
+      scene.add(axes);
+
+      loadModel();
+
+      var planeGeometry = new THREE.PlaneGeometry(100, 100);
+      var planeMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+      var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      plane.rotation.x = -0.5 * Math.PI;
+      plane.position.set(15, 0, 0);
+      plane.receiveShadow = true;
+
+      scene.add(plane);
+
+      camera.position.x = -5;
+      camera.position.y = 5;
+      camera.position.z = 5;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(-60, 30, -65);
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
+      spotLight.shadow.camera.far = 130;
+      spotLight.shadow.camera.near = 40;
+      // scene.add(spotLight);
+
+      var ambienLight = new THREE.AmbientLight(0xcccccc);
+      // scene.add(ambienLight);
+
+      const pointLight = new THREE.PointLight(0xffffff, 6, 60);
+      pointLight.position.set(0, 0, 2);
+      scene.add(pointLight);
+
+      var sphereGeo = new THREE.SphereGeometry(0.1);
+      var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      var sphereMesh = new THREE.Mesh(sphereGeo, sphereMaterial);
+      sphereMesh.castShadow = true;
+      sphereMesh.position.copy(pointLight.position);
+      scene.add(sphereMesh);
+
+      var ctrlObj = {
+        pointColor: 0xffffff,
+        pointIntensity: 6,
+        pointDistance: 60,
+        pointdecay: 1,
+        dirColor: 0xffffff,
+        dirIntensity: 4,
+        pointLightVisible: true,
+        dirLightVisible: true,
+      };
+
+      var ctrl = new dat.GUI();
+      var pointLightFolder = ctrl.addFolder("pointLight");
+      pointLightFolder.addColor(ctrlObj, "pointColor").onChange(function (e) {
+        pointLight.color = new THREE.Color(e);
+      });
+
+      pointLightFolder
+        .add(ctrlObj, "pointIntensity", 0, 10)
+        .onChange(function (e) {
+          pointLight.intensity = e;
+        });
+
+      pointLightFolder
+        .add(ctrlObj, "pointDistance", 0, 1000)
+        .onChange(function (e) {
+          pointLight.distance = e;
+        });
+
+      pointLightFolder
+        .add(ctrlObj, "pointdecay", 0, 100)
+        .onChange(function (e) {
+          pointLight.decay = e;
+        });
+
+      pointLightFolder.add(ctrlObj, "pointLightVisible").onChange(function (e) {
+        pointLight.visible = e;
+        sphereMesh.visible = e;
+      });
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      directionalLight.position.set(20, 20, 20);
+      scene.add(directionalLight);
+
+      var dirCameraHelper = new THREE.CameraHelper(
+        directionalLight.shadow.camera
+      );
+      //scene.add(dirCameraHelper);
+
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      var dirLightFolder = ctrl.addFolder("directionalLight");
+      dirLightFolder.addColor(ctrlObj, "dirColor").onChange(function (e) {
+        directionalLight.color = new THREE.Color(e);
+      });
+
+      dirLightFolder.add(ctrlObj, "dirIntensity", 0, 10).onChange(function (e) {
+        directionalLight.intensity = e;
+      });
+
+      dirLightFolder.add(ctrlObj, "dirLightVisible").onChange(function (e) {
+        directionalLight.visible = e;
+      });
+
+      var geometry = new THREE.BoxGeometry(1, 1, 1);
+      var material = new THREE.MeshLambertMaterial({ color: 0xff2288 });
+      var cube = new THREE.Mesh(geometry, material);
+      cube.castShadow = true;
+      cube.position.set(-20, 2, 0);
+      scene.add(cube);
+      // directionalLight.target = cube;
+
+      renderScene();
+
+      var pos = 0;
+      function renderScene() {
+        pos += 0.1;
+        pointLight.position.y = Math.abs(Math.sin(pos) * 2);
+        sphereMesh.position.copy(pointLight.position);
+
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        render.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function loadModel() {
+        new GLTFLoader()
+          .setPath("model/")
+          .load("untitled.glb", function (gltf) {
+            gltf.scene.scale.set(0.01, 0.01, 0.01);
+            gltf.scene.traverse(function (object) {
+              if (object.isMesh) object.castShadow = true;
+            });
+
+            scene.add(gltf.scene);
+          });
+      }
+    </script>
+  </body>
+</html>

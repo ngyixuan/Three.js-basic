@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      // import {
+      //   Scene,
+      //   PerspectiveCamera,
+      //   WebGLRenderer,
+      //   BoxGeometry,
+      //   MeshBasicMaterial,
+      //   Mesh,
+      //   AxesHelper,
+      //   PlaneGeometry,
+      //   MeshLambertMaterial,
+      //   AmbientLight,
+      //   SpotLight,
+      //   Vector2,
+      //   Fog,
+      //   FogExp2,
+      //   TorusGeometry,
+      //   CylinderGeometry,
+      //   BufferGeometry,
+      //   BufferAttribute,
+      //   DoubleSide,
+      //   WireframeGeometry,
+      //   LineSegments,
+      //   Color,
+      //   OrthographicCamera,
+      //   SpotLightHelper,
+      //   CameraHelper
+
+      // } from "./libs/three.js/src/three.js";
+
+      import * as THREE from "./libs/three.js/build/three.module.js";
+
+      import { GLTFLoader } from "./libs/three.js/src/jsm/loaders/GLTFLoader.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { RectAreaLightUniformsLib } from "./libs/three.js/src/jsm/lights/RectAreaLightUniformsLib.js";
+      import { RectAreaLightHelper } from "./libs/three.js/src/jsm/helpers/RectAreaLightHelper.js";
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //设置机位
+      camera.position.x = 3;
+      camera.position.y = 5;
+      camera.position.z = 10;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //地面和阴影
+      var planeGeometry = new THREE.PlaneGeometry(100, 100);
+      var planeMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+      var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -0.5 * Math.PI;
+      plane.position.set(15, 0, 0);
+      plane.receiveShadow = true; //盒子接收阴影
+      scene.add(plane);
+
+      //lambert光源的颜色会应用到整个场景中的对象，不能作为唯一的光源来使用
+      var ambientLight = new THREE.AmbientLight(0xcccccc);
+      // scene.add(ambientLight);
+
+      //加入能产生阴影的光源
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(-60, 30, -65);
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
+      spotLight.shadow.camera.far = 130;
+      spotLight.shadow.camera.near = 40;
+      // scene.add(spotLight);
+
+      //创建pointLight
+      //光照颜色，光照强度，光源到光照强度为0的位置，沿着光照距离的衰退量
+      const pointLight = new THREE.PointLight(0xffffff, 6, 160);
+      pointLight.position.set(0, 0, 5);
+      // scene.add(pointLight);
+
+      //创建directionalLight平行光
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
+      //让平行光产生阴影
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      directionalLight.position.set(20, 20, 20);
+      // scene.add(directionalLight);
+
+      //创建hemisphere半球光光源
+      const hemisphereLight = new THREE.HemisphereLight(0xffffff);
+      // scene.add(hemisphereLight);
+
+      //创建rectAreaLight平面光光源
+      RectAreaLightUniformsLib.init();
+      const rectLight = new THREE.RectAreaLight(0xff0000, 5, 4, 10);
+      rectLight.position.set(0, 0, 0);
+      scene.add(rectLight);
+
+      const geoFloor = new THREE.BoxGeometry(2000, 0.1, 2000);
+      //平面光只是支持MeshStandardMaterial和MeshPysicalMaterial
+      const matStdFloor = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.2,
+        metal: 0,
+      });
+      const mshStdFloor = new THREE.Mesh(geoFloor, matStdFloor);
+      scene.add(mshStdFloor);
+
+      //辅助线helper,帮助看见平行光源照射位置
+      const helper = new THREE.DirectionalLightHelper(directionalLight, 5);
+      //scene.add(helper);
+
+      //辅助线helper,帮助看见平行光源位置
+      const dirCameraHelper = new THREE.CameraHelper(
+        directionalLight.shadow.camera
+      );
+      // scene.add(dirCameraHelper);
+
+      //辅助线帮助看见rectLight平面光
+      const rectLightHelper = new RectAreaLightHelper(rectLight);
+      scene.add(rectLightHelper);
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //小球
+      var sphereGeo = new THREE.SphereGeometry(0.1);
+      var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      var sphereMesh = new THREE.Mesh(sphereGeo, sphereMaterial);
+      sphereMesh.castShadow = true;
+      sphereMesh.position.copy(pointLight.position);
+      scene.add(sphereMesh);
+
+      // 测试平行光对target是都产生阴影
+      var geometry = new THREE.BoxGeometry(1, 1, 1);
+      var material = new THREE.MeshLambertMaterial({ color: 0xff2288 });
+      var cube = new THREE.Mesh(geometry, material);
+      cube.castShadow = true;
+      cube.position.set(-7, 2, 0);
+      scene.add(cube);
+      // directionalLight.target = cube;
+
+      //生成盒子
+      // var geometry = new THREE.BoxGeometry(8, 8, 8);
+      // var material = new THREE.MeshLambertMaterial({ color: 0xff2288 });
+      // var cube = new THREE.Mesh(geometry, material);
+      // cube.castShadow = true; //盒子阴影
+      // cube.position.x = 0;
+      // cube.position.y = 8;
+      // cube.position.z = 0;
+      // scene.add(cube);
+
+      //控制台
+      var ctrlObj = {
+        //聚光灯
+        pointColor: 0xffffff,
+        pointIntensity: 6,
+        pointDistance: 60,
+        pointdecay: 1,
+        pointLightVisible: true,
+        //平行光
+        dirIntensity: 4,
+        dirColor: 0xffffff,
+        dirLightVisible: true,
+        //半球光
+        skycolor: 0xffffff,
+        groundColor: 0x00ff00,
+        hemisphereIntensity: 1,
+        hemisphereLightVisible: true,
+        //平面光光源rectArea
+        areaColor: 0xff0000,
+        areaIntensity: 1,
+      };
+
+      var ctrl = new dat.GUI();
+      //pointLight控制台
+      var pointLightFolder = ctrl.addFolder("spotLight");
+      pointLightFolder.addColor(ctrlObj, "pointColor").onChange(function (e) {
+        pointLight.color = new THREE.Color(e);
+      });
+      pointLightFolder
+        .add(ctrlObj, "pointIntensity", 0, 10)
+        .onChange(function (e) {
+          pointLight.intensity = e;
+        });
+      pointLightFolder
+        .add(ctrlObj, "pointDistance", 0, 1000)
+        .onChange(function (e) {
+          pointLight.distance = e;
+        });
+
+      pointLightFolder
+        .add(ctrlObj, "pointdecay", 0, 100)
+        .onChange(function (e) {
+          pointLight.decay = e;
+        });
+
+      pointLightFolder.add(ctrlObj, "pointLightVisible").onChange(function (e) {
+        pointLight.visible = e;
+        sphereMesh.visible = e;
+      });
+
+      //directionalLight控制台
+      var dirLightFolder = ctrl.addFolder("directionalLight");
+      dirLightFolder.addColor(ctrlObj, "dirColor").onChange(function (e) {
+        directionalLight.color = new THREE.Color(e);
+      });
+      dirLightFolder.add(ctrlObj, "dirIntensity", 0, 10).onChange(function (e) {
+        directionalLight.intensity = e;
+      });
+      dirLightFolder.add(ctrlObj, "dirLightVisible").onChange(function (e) {
+        directionalLight.visible = e;
+      });
+
+      //hemisphereLight 控制台
+      var hemisphereLightFolder = ctrl.addFolder("hemisphereLight");
+      hemisphereLightFolder
+        .add(ctrlObj, "hemisphereLightVisible")
+        .onChange(function (e) {
+          hemisphereLight.visible = e;
+        });
+      hemisphereLightFolder
+        .addColor(ctrlObj, "skycolor")
+        .onChange(function (e) {
+          hemisphereLight.color = new THREE.Color(e);
+        });
+      hemisphereLightFolder
+        .addColor(ctrlObj, "groundColor")
+        .onChange(function (e) {
+          hemisphereLight.groundColor = new THREE.Color(e);
+        });
+      hemisphereLightFolder
+        .add(ctrlObj, "hemisphereIntensity", 0, 10)
+        .onChange(function (e) {
+          hemisphereLight.intensity = e;
+        });
+
+      //rectLight 控制台
+      var areaLightFolder = ctrl.addFolder("AreaLight");
+      areaLightFolder.addColor(ctrlObj, "areaColor").onChange(function (e) {
+        rectLight.color = new THREE.Color(e);
+      });
+      areaLightFolder
+        .add(ctrlObj, "areaIntensity", 0, 10)
+        .onChange(function (e) {
+          rectLight.intensity = e;
+        });
+      loadModel();
+      // 加载模型
+      function loadModel() {
+        new GLTFLoader().load("./assets/model/scene.gltf", function (gltf) {
+          gltf.scene.scale.set(0.2, 0.2, 0.2);
+
+          //DirectionalLight平行光可以产生阴影效果
+          //遍历模型的所有对象产生阴影
+          gltf.scene.traverse(function (object) {
+            if (object.isMesh) object.castShadow = true;
+          });
+
+          scene.add(gltf.scene);
+        });
+      }
+
+      //渲染页面
+      renderScene();
+
+      //小球的位置
+      var pos = 0;
+      //封装刷新页面的方法
+      function renderScene() {
+        //移动小球
+        pos += 0.1;
+        pointLight.position.y = Math.abs(Math.sin(pos) * 2);
+        sphereMesh.position.copy(pointLight.position);
+
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>
