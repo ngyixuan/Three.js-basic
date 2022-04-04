@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { ParametricGeometry } from "./libs/three.js/src/jsm/geometries/ParametricGeometry.js";
+      import { ParametricGeometries } from "./libs/three.js/src/jsm/geometries/ParametricGeometries.js";
+      import { FontLoader } from "./libs/three.js/src/jsm/loaders/FontLoader.js";
+      import { TextGeometry } from "./libs/three.js/src/jsm/geometries/TextGeometry.js";
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //设置机位
+      camera.position.x = 20;
+      camera.position.y = 100;
+      camera.position.z = 100;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0xdcdcdc));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //创建地面
+      var groundGeo = new THREE.PlaneGeometry(200, 200, 4, 4);
+      var groundMaterial = new THREE.MeshBasicMaterial({ color: 0xc0c0c0 });
+      var groundMesh = new THREE.Mesh(groundGeo, groundMaterial);
+      groundMesh.rotation.x = -Math.PI / 2;
+      groundMesh.position.x = -20;
+      scene.add(groundMesh);
+
+      //创建盒子
+      var cubeGeo = new THREE.BoxGeometry(15, 15, 15);
+      var cubeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x7777ff,
+      });
+      var cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
+      cubeMesh.position.set(0, 30, 0);
+      scene.add(cubeMesh);
+
+      //添加back光源
+      const directionBackLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      directionBackLight.position.set(0, 0, -90);
+      scene.add(directionBackLight);
+
+      // //添加front光源
+      // const directionFrontLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      // directionFrontLight.position.set(0, 0, 90);
+      // scene.add(directionFrontLight);
+
+      //控制台
+      var ctrlObj = {
+        visible: true,
+        transparent: false,
+        opacity: 1,
+        side: "front",
+        depthTest: true,
+        depthWrite: true,
+        alphaTest: 1,
+        color: 0x777777,
+        wireframe: false,
+        map: true, //设置材质中map颜色贴图是否存在
+        reflectivity: 1, //环境贴图对表面的影响程度
+      };
+
+      var control = new dat.GUI();
+      const folder = control.addFolder("attribute");
+      folder.add(ctrlObj, "visible").onChange(function (e) {
+        cubeMaterial.visible = e;
+      });
+      folder.add(ctrlObj, "transparent").onChange(function (e) {
+        cubeMaterial.transparent = e;
+      });
+      folder.add(ctrlObj, "opacity", 0, 1).onChange(function (e) {
+        cubeMaterial.opacity = e;
+      });
+      folder.add(ctrlObj, "depthTest").onChange(function (e) {
+        cubeMaterial.depthTest = e;
+      });
+      folder.add(ctrlObj, "depthWrite").onChange(function (e) {
+        cubeMaterial.depthWrite = e;
+      });
+      folder.add(ctrlObj, "alphaTest", 0, 1).onChange(function (e) {
+        cubeMaterial.alphaTest = e;
+      });
+      folder
+        .add(ctrlObj, "side", ["front", "back", "double"])
+        .onChange(function (e) {
+          switch (e) {
+            case "front":
+              cubeMaterial.side = THREE.FrontSide;
+              break;
+            case "back":
+              cubeMaterial.side = THREE.BackSide;
+              break;
+            case "double":
+              cubeMaterial.side = THREE.DoubleSide;
+              break;
+            default:
+              break;
+          }
+          cubeMaterial.needsUpdate = true;
+        });
+
+      const textureLoader = new THREE.TextureLoader();
+      const brick = textureLoader.load(
+        "./assets/model/textures/Texture1_baseColor.png"
+      );
+      cubeMaterial.map = brick;
+
+      var textureCube = createEnv();
+      cubeMaterial.envMap = textureCube;
+
+      const BasicFolder = control.addFolder("MeshBasicMaterial");
+      BasicFolder.addColor(ctrlObj, "color").onChange(function (e) {
+        cubeMaterial.color = new THREE.Color(e);
+      });
+      BasicFolder.add(ctrlObj, "wireframe").onChange(function (e) {
+        cubeMaterial.wireframe = e;
+      });
+      //将颜色贴图设置为对应的为例，否则不设置颜色贴图
+      BasicFolder.add(ctrlObj, "map").onChange(function (e) {
+        cubeMaterial.map = e ? brick : null;
+        cubeMaterial.needsupdate = true;
+      });
+
+      //环境贴图对表面的影响程度
+      BasicFolder.add(ctrlObj, "reflectivity", 0, 1).onChange(function (e) {
+        cubeMaterial.reflectivity = e;
+      });
+
+      //   //添加ambientLight
+      //   const ambientLight = new THREE.AmbientLight(0xffffff);
+      //   scene.add(ambientLight);
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //渲染页面
+      renderScene();
+
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      // 封装环境贴图，创建数组存放环境贴图
+      function createEnv() {
+        var urls = [
+          "./assets/model/textures/back.png",
+          "./assets/model/textures/front.png",
+          "./assets/model/textures/bottom.png",
+          "./assets/model/textures/top.png",
+          "./assets/model/textures/left.png",
+          "./assets/model/textures/right.png",
+        ];
+        const cubeTxLoader = new THREE.CubeTextureLoader();
+        const refCube = cubeTxLoader.load(urls);
+        refCube.mapping = THREE.CubeRefractionMapping;
+        refCube.format = THREE.RGBFormat;
+        return refCube;
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>

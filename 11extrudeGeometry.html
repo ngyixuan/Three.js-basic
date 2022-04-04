@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //设置机位
+      camera.position.x = 30;
+      camera.position.y = 12;
+      camera.position.z = 60;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //
+      var logoShape = new THREE.Shape();
+      logoShape.moveTo(0, 0);
+      logoShape.lineTo(34, 0);
+      logoShape.lineTo(30, 38);
+      logoShape.lineTo(-23, 13);
+      logoShape.lineTo(-6, -25);
+      logoShape.lineTo(-5, 21);
+      logoShape.lineTo(10, 28);
+      logoShape.lineTo(25, 10);
+      logoShape.lineTo(0, 0);
+      var logoGeo = new THREE.ShapeGeometry(logoShape);
+      var logoMat = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        side: THREE.DoubleSide,
+      });
+      var logo2D = new THREE.Mesh(logoGeo, logoMat);
+      scene.add(logo2D);
+
+      //设置拉伸对象属性
+      var extrudeSetting = {
+        steps: 1,
+        depth: 1,
+        bevelEnable: false,
+        bevelThickness: 5,
+        bevelSize: -0.1,
+        bevelOffset: 0,
+        bevelSegments: 3,
+        wireframe: true,
+      };
+
+      //创建拉伸对象
+      var extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+      var extrudeMat = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true,
+        side: THREE.DoubleSide,
+      });
+      var logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+      scene.add(logo3D);
+
+      //拉伸对象控制台
+      var ctrl = new dat.GUI();
+      var logo3DFolder = ctrl.addFolder("extrudeGeometry");
+      logo3DFolder.add(extrudeSetting, "wireframe").onChange(function () {
+        scene.remove(logo3D);
+        extrudeMat = new THREE.MeshBasicMaterial({
+          color: 0xff0000,
+          wireframe: extrudeSetting.wireframe,
+          side: THREE.DoubleSide,
+        });
+        logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+        scene.add(logo3D);
+      });
+      logo3DFolder.add(extrudeSetting, "steps", 0, 5).onChange(function () {
+        scene.remove(logo3D);
+        extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+        logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+        scene.add(logo3D);
+      });
+      logo3DFolder.add(extrudeSetting, "depth", 0, 5).onChange(function () {
+        scene.remove(logo3D);
+        extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+        logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+        scene.add(logo3D);
+      });
+
+      logo3DFolder.add(extrudeSetting, "bevelEnable").onChange(function () {
+        scene.remove(logo3D);
+        extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+        logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+        scene.add(logo3D);
+      });
+      logo3DFolder
+        .add(extrudeSetting, "bevelThickness", 0, 5)
+        .onChange(function () {
+          scene.remove(logo3D);
+          extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+          logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+          scene.add(logo3D);
+        });
+      logo3DFolder.add(extrudeSetting, "bevelSize", 0, 5).onChange(function () {
+        scene.remove(logo3D);
+        extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+        logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+        scene.add(logo3D);
+      });
+      logo3DFolder
+        .add(extrudeSetting, "bevelOffset", 0, 5)
+        .onChange(function () {
+          scene.remove(logo3D);
+          extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+          logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+          scene.add(logo3D);
+        });
+      logo3DFolder
+        .add(extrudeSetting, "bevelSegments", 0, 50)
+        .onChange(function () {
+          scene.remove(logo3D);
+          extrudeGeo = new THREE.ExtrudeGeometry(logoShape, extrudeSetting);
+          logo3D = new THREE.Mesh(extrudeGeo, extrudeMat);
+          scene.add(logo3D);
+        });
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //渲染页面
+      renderScene();
+
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>

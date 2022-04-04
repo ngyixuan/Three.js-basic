@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { ParametricGeometry } from "./libs/three.js/src/jsm/geometries/ParametricGeometry.js";
+      import { ParametricGeometries } from "./libs/three.js/src/jsm/geometries/ParametricGeometries.js";
+      import { FontLoader } from "./libs/three.js/src/jsm/loaders/FontLoader.js";
+      import { TextGeometry } from "./libs/three.js/src/jsm/geometries/TextGeometry.js";
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //设置机位
+      camera.position.x = 0;
+      camera.position.y = 0;
+      camera.position.z = 700;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0x333333));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //添加back光源
+      const directionBackLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      directionBackLight.position.set(0, 0, -90);
+      scene.add(directionBackLight);
+
+      //添加front光源
+      const directionFrontLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      directionFrontLight.position.set(0, 0, 90);
+      scene.add(directionFrontLight);
+
+      //   //添加ambientLight
+      //   const ambientLight = new THREE.AmbientLight(0xffffff);
+      //   scene.add(ambientLight);
+      var textMesh, gFont;
+      const loader = new FontLoader();
+      loader.load(
+        "libs/three.js/src/fonts/helvetiker_bold.typeface.json",
+        function (font) {
+          gFont = font;
+          const geometry = new TextGeometry("Testing", {
+            font: font,
+            size: 80,
+            height: 20,
+            curveSegments: 4,
+            bevelEnabled: true,
+            bevelThickness: 2,
+            bevelSize: 1.5,
+            bevelSegments: 4,
+          });
+          var materials = [
+            new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true }),
+            new THREE.MeshPhongMaterial({ color: 0xffffff }),
+          ];
+          textMesh = new THREE.Mesh(geometry, materials);
+          textMesh.position.set(-270, 0, 0);
+          scene.add(textMesh);
+        }
+      );
+
+      var ctrlObj = {
+        size: 80,
+        height: 20,
+        curveSegments: 4,
+        bevelEnabled: true,
+        bevelThickness: 2,
+        bevelSize: 1.5,
+        bevelSegments: 4,
+      };
+      //拉伸对象控制台
+      var ctrl = new dat.GUI();
+      ctrl.add(ctrlObj, "size", 0, 100).onChange(function (e) {
+        createText();
+      });
+      ctrl.add(ctrlObj, "height", 0, 100).onChange(function (e) {
+        createText();
+      });
+      ctrl
+        .add(ctrlObj, "curveSegments", 1, 4)
+        .step(1)
+        .onChange(function (e) {
+          createText();
+        });
+      ctrl.add(ctrlObj, "bevelEnabled").onChange(function (e) {
+        createText();
+      });
+      ctrl.add(ctrlObj, "bevelThickness", 0, 100).onChange(function (e) {
+        createText();
+      });
+      ctrl.add(ctrlObj, "bevelSize", 0, 100).onChange(function (e) {
+        createText();
+      });
+      ctrl.add(ctrlObj, "bevelSegments", 0, 100).onChange(function (e) {
+        createText();
+      });
+
+      //封装生成三维文本的createText方法
+      function createText() {
+        scene.remove(textMesh);
+        const geometry = new TextGeometry("Testing", {
+          font: gFont,
+          size: ctrlObj.size,
+          height: ctrlObj.height,
+          curveSegments: ctrlObj.curveSegments,
+          bevelEnabled: ctrlObj.bevelEnabled,
+          bevelThickness: ctrlObj.bevelThickness,
+          bevelSize: ctrlObj.bevelSize,
+          bevelSegments: ctrlObj.bevelSegments,
+        });
+        var materials = [
+          new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true }),
+          new THREE.MeshPhongMaterial({ color: 0xffffff }),
+        ];
+        textMesh = new THREE.Mesh(geometry, materials);
+        textMesh.position.set(-270, 0, 0);
+        scene.add(textMesh);
+      }
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //渲染页面
+      renderScene();
+
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>
