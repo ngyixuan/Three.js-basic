@@ -70,15 +70,19 @@
       cubeMesh.position.set(0, 30, 0);
       scene.add(cubeMesh);
 
-      //添加back光源
-      const directionBackLight = new THREE.DirectionalLight(0xffffff, 1.25);
-      directionBackLight.position.set(0, 0, -90);
-      scene.add(directionBackLight);
+      // //添加back光源
+      // const directionBackLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      // directionBackLight.position.set(0, 0, -90);
+      // scene.add(directionBackLight);
 
       // //添加front光源
       // const directionFrontLight = new THREE.DirectionalLight(0xffffff, 1.25);
       // directionFrontLight.position.set(0, 0, 90);
       // scene.add(directionFrontLight);
+
+      //添加ambientLight
+      const ambientLight = new THREE.AmbientLight(0xffffff);
+      scene.add(ambientLight);
 
       //控制台
       var ctrlObj = {
@@ -93,6 +97,8 @@
         wireframe: false,
         map: true, //设置材质中map颜色贴图是否存在
         reflectivity: 1, //环境贴图对表面的影响程度
+        refractionRatio: 0.98, //空气折射率除以材质直射率
+        combine: "Multiply",
       };
 
       var control = new dat.GUI();
@@ -138,11 +144,11 @@
       const brick = textureLoader.load(
         "./assets/model/textures/Texture1_baseColor.png"
       );
+      //将颜色贴图设置为对应的为例，否则不设置颜色贴图
       cubeMaterial.map = brick;
-
       var textureCube = createEnv();
       cubeMaterial.envMap = textureCube;
-
+      //材质属性
       const BasicFolder = control.addFolder("MeshBasicMaterial");
       BasicFolder.addColor(ctrlObj, "color").onChange(function (e) {
         cubeMaterial.color = new THREE.Color(e);
@@ -150,16 +156,35 @@
       BasicFolder.add(ctrlObj, "wireframe").onChange(function (e) {
         cubeMaterial.wireframe = e;
       });
-      //将颜色贴图设置为对应的为例，否则不设置颜色贴图
       BasicFolder.add(ctrlObj, "map").onChange(function (e) {
         cubeMaterial.map = e ? brick : null;
-        cubeMaterial.needsupdate = true;
+        cubeMaterial.needsUpdate = true;
       });
-
       //环境贴图对表面的影响程度
       BasicFolder.add(ctrlObj, "reflectivity", 0, 1).onChange(function (e) {
         cubeMaterial.reflectivity = e;
       });
+      BasicFolder.add(ctrlObj, "refractionRatio", 0, 1).onChange(function (e) {
+        cubeMaterial.refractionRatio = e;
+      });
+      BasicFolder.add(ctrlObj, "combine", ["Multiply", "Mix", "Add"]).onChange(
+        function (e) {
+          switch (e) {
+            case "Multiply":
+              cubeMaterial.combine = THREE.MultyplyOperation;
+              break;
+            case "Mix":
+              cubeMaterial.combine = THREE.MixOperation;
+              break;
+            case "Add":
+              cubeMaterial.combine = THREE.AddOperation;
+              break;
+            default:
+              break;
+          }
+          cubeMaterial.needsUpdate = true;
+        }
+      );
 
       //   //添加ambientLight
       //   const ambientLight = new THREE.AmbientLight(0xffffff);
