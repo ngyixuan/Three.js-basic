@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { createMultiMaterialObject } from "./libs/three.js/src/jsm/utils/SceneUtils.js";
+
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        50,
+        1000
+      );
+      camera.position.set(240, 50, 240);
+
+      //设置机位
+      camera.position.x = 20;
+      camera.position.y = 100;
+      camera.position.z = 100;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //   //创建地面
+      //   var groundGeo = new THREE.PlaneGeometry(200, 200, 4, 4);
+      //   var groundMaterial = new THREE.MeshBasicMaterial({ color: 0xc0c0c0 });
+      //   var groundMesh = new THREE.Mesh(groundGeo, groundMaterial);
+      //   groundMesh.rotation.x = -Math.PI / 2;
+      //   groundMesh.position.x = -20;
+      //   scene.add(groundMesh);
+
+      //   //创建盒子
+      //   var cubeGeo = new THREE.BoxGeometry(15, 15, 15);
+      //   var cubeMaterial = new THREE.MeshBasicMaterial({
+      //     color: 0x7777ff,
+      //   });
+      //   var cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
+      //   cubeMesh.position.set(0, 30, 0);
+      //   scene.add(cubeMesh);
+
+      // //添加back光源
+      // const directionBackLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      // directionBackLight.position.set(0, 0, -90);
+      // scene.add(directionBackLight);
+
+      // //添加front光源
+      // const directionFrontLight = new THREE.DirectionalLight(0xffffff, 1.25);
+      // directionFrontLight.position.set(0, 0, 90);
+      // scene.add(directionFrontLight);
+
+      //添加ambientLight
+      //   const ambientLight = new THREE.AmbientLight(0xffffff);
+      //   scene.add(ambientLight);
+
+      var ctrlObj = {
+        cameraNear: 50,
+        cameraFar: 1000,
+        index: 0,
+        color: 0x7777ff,
+        addCube: function () {
+          var cubeGeo = new THREE.BoxGeometry(10, 10, 10);
+          var cubeMaterial = new THREE.MeshDepthMaterial();
+          var cubeMaterial2 = new THREE.MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            blending: THREE.MultiplyBlending,
+          });
+          //   var cube = new THREE.Mesh(cubeGeo, cubeMaterial);
+          //调用createMultiMaterialObject创建一个正方体网格,第一个参数是几何体，第二个参数是材质数组
+          var cube = createMultiMaterialObject(cubeGeo, [
+            cubeMaterial,
+            cubeMaterial2,
+          ]);
+          cube.position.x = 100 - 15 * this.index;
+          cube.position.y = 16;
+          cube.position.z = 100 - 15 * this.index;
+          scene.add(cube);
+          this.index++;
+        },
+      };
+
+      var ctrl = new dat.GUI();
+      ctrl.add(ctrlObj, "addCube");
+      ctrl.add(ctrlObj, "cameraNear", 0, 50).onChange(function (e) {
+        camera.near = e;
+        camera.updateProjectionMatrix();
+      });
+      ctrl.add(ctrlObj, "cameraFar", 0, 1000).onChange(function (e) {
+        camera.far = e;
+        camera.updateProjectionMatrix();
+      });
+      ctrl.addColor(ctrlObj, "color");
+
+      //   //添加ambientLight
+      //   const ambientLight = new THREE.AmbientLight(0xffffff);
+      //   scene.add(ambientLight);
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //渲染页面
+      renderScene();
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+    </script>
+  </body>
+</html>
