@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      var scene, camera, render, controls;
+      scene = init();
+      //   var group = new THREE.Group();
+      //   //组对象添加到场景对象
+      //   scene.add(group);
+
+      //地面和阴影
+      var planeGeometry = new THREE.PlaneGeometry(100, 100);
+      var planeMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+      var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -0.5 * Math.PI;
+      plane.position.set(15, 0, 0);
+      plane.receiveShadow = true; //盒子接收阴影
+      //   scene.add(plane);
+
+      //planeGeometry 平面几何体
+      var planeGeometry = new THREE.PlaneGeometry(4, 8, 4, 4);
+      var planeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      planeMat.side = THREE.DoubleSide;
+      planeMat.wireframe = true;
+      var plane = new THREE.Mesh(planeGeometry, planeMat); //几何体和网格合并
+      scene.add(plane);
+
+      //circleGeometry
+      var circleGeo = new THREE.CircleGeometry(4, 10, 0, Math.PI * 2);
+      var circleMat = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+        side: THREE.DoubleSide,
+      });
+      var circle = new THREE.Mesh(circleGeo, circleMat);
+      circle.translateX(20);
+      scene.add(circle);
+
+      //ringGeometry
+      var ringGeo = new THREE.RingGeometry(3, 4, 8, 8, 0, Math.PI * 2);
+      var ringMat = new THREE.MeshBasicMaterial({
+        color: 0xff00ff,
+        wireframe: true,
+        side: THREE.DoubleSide,
+      });
+      var ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.translateX(40);
+      scene.add(ring);
+
+      var boxGeo = new THREE.BoxGeometry(3, 4, 2, 3, 4, 2);
+      var boxMat = new THREE.MeshBasicMaterial({
+        color: 0x0000ff,
+        wireframe: true,
+      });
+      var box = new THREE.Mesh(boxGeo, boxMat);
+      box.translateY(20);
+      scene.add(box);
+
+      var sphereGeo = new THREE.SphereGeometry(
+        3,
+        8,
+        8,
+        0,
+        Math.PI * 2,
+        0,
+        Math.PI * 2
+      );
+      var sphereMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: true,
+      });
+      var sphere = new THREE.Mesh(sphereGeo, sphereMat);
+      sphere.translateX(20);
+      sphere.translateY(20);
+      scene.add(sphere);
+
+      var cylinderGeo = new THREE.CylinderGeometry(
+        2,
+        2,
+        4,
+        8,
+        4,
+        true,
+        0,
+        Math.PI * 2
+      );
+      var cylinderMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        wireframe: true,
+      });
+      var cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+      cylinder.translateX(40);
+      cylinder.translateY(20);
+      scene.add(cylinder);
+
+      var coneGeo = new THREE.ConeGeometry(2, 4, 8, 4, true, 0, Math.PI * 2);
+      var coneMat = new THREE.MeshBasicMaterial({
+        color: 0xffff00,
+        wireframe: true,
+      });
+      var cone = new THREE.Mesh(coneGeo, coneMat);
+      cone.translateX(60);
+      cone.translateY(20);
+      scene.add(cone);
+
+      var torusGeo = new THREE.TorusGeometry(3, 1, 8, 8, Math.PI * 2);
+      var torusMat = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true,
+      });
+      var torus = new THREE.Mesh(torusGeo, torusMat);
+      torus.translateY(40);
+      scene.add(torus);
+
+      var torusKnotGeo = new THREE.TorusKnotGeometry(3, 1, 60, 20, 2, 3);
+      var torusKnotMat = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+      });
+      var torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+      torusKnot.translateY(40);
+      torusKnot.translateX(20);
+      scene.add(torusKnot);
+
+      var icosahedronGeo = new THREE.IcosahedronGeometry(4, 0);
+      var icosahedronMat = new THREE.MeshBasicMaterial({
+        color: 0xffff00,
+        wireframe: true,
+      });
+      var icosahedron = new THREE.Mesh(icosahedronGeo, icosahedronMat);
+      icosahedron.translateY(60);
+      scene.add(icosahedron);
+
+      var tetrahedronGeo = new THREE.TetrahedronGeometry(4, 0);
+      var tetrahedronMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: true,
+      });
+      var tetrahedron = new THREE.Mesh(tetrahedronGeo, tetrahedronMat);
+      tetrahedron.translateY(60);
+      tetrahedron.translateX(20);
+      scene.add(tetrahedron);
+
+      var octahedronGeo = new THREE.OctahedronGeometry(4, 0);
+      var octahedronMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        wireframe: true,
+      });
+      var octahedron = new THREE.Mesh(octahedronGeo, octahedronMat);
+      octahedron.translateY(60);
+      octahedron.translateX(40);
+      scene.add(octahedron);
+
+      var dodecahedronGeo = new THREE.DodecahedronGeometry(4, 0);
+      var dodecahedronMat = new THREE.MeshBasicMaterial({
+        color: 0xff00ff,
+        wireframe: true,
+      });
+      var dodecahedron = new THREE.Mesh(dodecahedronGeo, dodecahedronMat);
+      dodecahedron.translateY(60);
+      dodecahedron.translateX(60);
+      scene.add(dodecahedron);
+
+      var ctrlObj = {
+        width: 4,
+        height: 8,
+        widthSegments: 4,
+        heightSegments: 8,
+        circleRadius: 4,
+        circleSegments: 10,
+        circleThetaStart: 0,
+        circleThetaLength: Math.PI * 2,
+        ringInnerRadius: 3,
+        ringOuterRadius: 4,
+        ringThetaSegments: 8,
+        ringPhiSegments: 8,
+        ringThetaStart: 0,
+        ringThetaLength: Math.PI * 2,
+        boxWidth: 3,
+        boxHeight: 4,
+        boxDepth: 2,
+        boxWidthSegments: 3,
+        boxHeightSegments: 4,
+        boxDepthSegments: 5,
+        sphereRadius: 3,
+        sphereWidthSegments: 8,
+        sphereHeightSegments: 8,
+        spherePhiStart: 0,
+        spherePhiLength: Math.PI * 2,
+        sphereThetaStart: 0,
+        sphereThetaLength: Math.PI * 2,
+        cylinderRadiusTop: 2,
+        cylinderRadiusBottom: 2,
+        cylinderHeight: 4,
+        cylinderRadialSegments: 8,
+        cylinderHeightSegments: 4,
+        cylinderOpenEnded: true,
+        cylinderThetaStart: 0,
+        cylinderThetaLength: Math.PI * 2,
+        coneRadius: 2,
+        coneHeight: 4,
+        coneRadialSegments: 8,
+        coneHeightSegments: 4,
+        coneOpenEnded: true,
+        coneThetaStart: 0,
+        coneThetaLength: Math.PI * 2,
+        torusRadius: 3,
+        torusTube: 1,
+        torusRadialSegments: 8,
+        torusTubularSegments: 8,
+        torusArc: Math.PI * 2,
+        torusKnotRadius: 3,
+        torusKnotTube: 1,
+        torusKnotTubularSegments: 60,
+        torusKnotRadialSegments: 20,
+        torusKnotP: 2, //这个值决定了几何体将绕着其旋转对称轴旋转多少次
+        torusKnotQ: 3, //这个值决定了几何体将绕着其内部圆环旋转多少次
+        icosahedronRadius: 4,
+        icosahedronDetail: 0,
+        tetrahedronRadius: 4,
+        tetrahedronDetail: 0,
+        octahedronRadius: 4,
+        octahedronDetail: 0,
+        dodecahedronRadius: 4,
+        dodecahedronDetail: 0,
+      };
+
+      var ctrl = new dat.GUI();
+      var planeFolder = ctrl.addFolder("plane");
+      planeFolder.add(ctrlObj, "width", 0, 20).onChange(function () {
+        scene.remove(plane);
+        planeGeo = new THREE.PlaneGeometry(
+          ctrlObj.width,
+          ctrlObj.height,
+          ctrlObj.widthSegments,
+          ctrlObj.heightSegments
+        );
+        plane = new THREE.Mesh(planeGeo, planeMat);
+        scene.add(plane);
+      });
+      planeFolder.add(ctrlObj, "height", 0, 20).onChange(function () {
+        scene.remove(plane);
+        planeGeo = new THREE.PlaneGeometry(
+          ctrlObj.width,
+          ctrlObj.height,
+          ctrlObj.widthSegments,
+          ctrlObj.heightSegments
+        );
+        plane = new THREE.Mesh(planeGeo, planeMat);
+        scene.add(plane);
+      });
+      planeFolder.add(ctrlObj, "widthSegments", 0, 20).onChange(function () {
+        scene.remove(plane);
+        planeGeo = new THREE.PlaneGeometry(
+          ctrlObj.width,
+          ctrlObj.height,
+          ctrlObj.widthSegments,
+          ctrlObj.heightSegments
+        );
+        plane = new THREE.Mesh(planeGeo, planeMat);
+        scene.add(plane);
+      });
+      planeFolder.add(ctrlObj, "heightSegments", 0, 20).onChange(function () {
+        scene.remove(plane);
+        planeGeo = new THREE.PlaneGeometry(
+          ctrlObj.width,
+          ctrlObj.height,
+          ctrlObj.widthSegments,
+          ctrlObj.heightSegments
+        );
+        plane = new THREE.Mesh(planeGeo, planeMat);
+        scene.add(plane);
+      });
+
+      var circleFolder = ctrl.addFolder("circle");
+      circleFolder.add(ctrlObj, "circleRadius", 0, 20).onChange(function () {
+        scene.remove(circle);
+        circleGeo = new THREE.CircleGeometry(
+          ctrlObj.circleRadius,
+          ctrlObj.circleSegments,
+          ctrlObj.circleThetaStart,
+          ctrlObj.circleThetaLength
+        );
+        circle = new THREE.Mesh(circleGeo, circleMat);
+        scene.add(circle);
+        circle.translateX(20);
+      });
+      circleFolder.add(ctrlObj, "circleSegments", 1, 50).onChange(function () {
+        scene.remove(circle);
+        circleGeo = new THREE.CircleGeometry(
+          ctrlObj.circleRadius,
+          ctrlObj.circleSegments,
+          ctrlObj.circleThetaStart,
+          ctrlObj.circleThetaLength
+        );
+        circle = new THREE.Mesh(circleGeo, circleMat);
+        scene.add(circle);
+        circle.translateX(20);
+      });
+      circleFolder
+        .add(ctrlObj, "circleThetaStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(circle);
+          circleGeo = new THREE.CircleGeometry(
+            ctrlObj.circleRadius,
+            ctrlObj.circleSegments,
+            ctrlObj.circleThetaStart,
+            ctrlObj.circleThetaLength
+          );
+          circle = new THREE.Mesh(circleGeo, circleMat);
+          scene.add(circle);
+          circle.translateX(20);
+        });
+      circleFolder
+        .add(ctrlObj, "circleThetaLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(circle);
+          circleGeo = new THREE.CircleGeometry(
+            ctrlObj.circleRadius,
+            ctrlObj.circleSegments,
+            ctrlObj.circleThetaStart,
+            ctrlObj.circleThetaLength
+          );
+          circle = new THREE.Mesh(circleGeo, circleMat);
+          scene.add(circle);
+          circle.translateX(20);
+        });
+
+      var ringFolder = ctrl.addFolder("ring");
+      ringFolder.add(ctrlObj, "ringInnerRadius", 0, 20).onChange(function () {
+        scene.remove(ring);
+        ringGeo = new THREE.RingGeometry(
+          ctrlObj.ringInnerRadius,
+          ctrlObj.ringOuterRadius,
+          ctrlObj.ringThetaSegments,
+          ctrlObj.ringPhiSegments,
+          ctrlObj.ringThetaStart,
+          ctrlObj.ringThetaLength
+        );
+        ring = new THREE.Mesh(ringGeo, ringMat);
+        scene.add(ring);
+        ring.translateX(40);
+      });
+      ringFolder.add(ctrlObj, "ringOuterRadius", 0, 20).onChange(function () {
+        scene.remove(ring);
+        ringGeo = new THREE.RingGeometry(
+          ctrlObj.ringInnerRadius,
+          ctrlObj.ringOuterRadius,
+          ctrlObj.ringThetaSegments,
+          ctrlObj.ringPhiSegments,
+          ctrlObj.ringThetaStart,
+          ctrlObj.ringThetaLength
+        );
+        ring = new THREE.Mesh(ringGeo, ringMat);
+        scene.add(ring);
+        ring.translateX(40);
+      });
+      ringFolder.add(ctrlObj, "ringThetaSegments", 0, 20).onChange(function () {
+        scene.remove(ring);
+        ringGeo = new THREE.RingGeometry(
+          ctrlObj.ringInnerRadius,
+          ctrlObj.ringOuterRadius,
+          ctrlObj.ringThetaSegments,
+          ctrlObj.ringPhiSegments,
+          ctrlObj.ringThetaStart,
+          ctrlObj.ringThetaLength
+        );
+        ring = new THREE.Mesh(ringGeo, ringMat);
+        scene.add(ring);
+        ring.translateX(40);
+      });
+      ringFolder.add(ctrlObj, "ringPhiSegments", 0, 20).onChange(function () {
+        scene.remove(ring);
+        ringGeo = new THREE.RingGeometry(
+          ctrlObj.ringInnerRadius,
+          ctrlObj.ringOuterRadius,
+          ctrlObj.ringThetaSegments,
+          ctrlObj.ringPhiSegments,
+          ctrlObj.ringThetaStart,
+          ctrlObj.ringThetaLength
+        );
+        ring = new THREE.Mesh(ringGeo, ringMat);
+        scene.add(ring);
+        ring.translateX(40);
+      });
+      ringFolder
+        .add(ctrlObj, "ringThetaStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(ring);
+          ringGeo = new THREE.RingGeometry(
+            ctrlObj.ringInnerRadius,
+            ctrlObj.ringOuterRadius,
+            ctrlObj.ringThetaSegments,
+            ctrlObj.ringPhiSegments,
+            ctrlObj.ringThetaStart,
+            ctrlObj.ringThetaLength
+          );
+          ring = new THREE.Mesh(ringGeo, ringMat);
+          scene.add(ring);
+          ring.translateX(40);
+        });
+      ringFolder
+        .add(ctrlObj, "ringThetaLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(ring);
+          ringGeo = new THREE.RingGeometry(
+            ctrlObj.ringInnerRadius,
+            ctrlObj.ringOuterRadius,
+            ctrlObj.ringThetaSegments,
+            ctrlObj.ringPhiSegments,
+            ctrlObj.ringThetaStart,
+            ctrlObj.ringThetaLength
+          );
+          ring = new THREE.Mesh(ringGeo, ringMat);
+          scene.add(ring);
+          ring.translateX(40);
+        });
+
+      var boxFolder = ctrl.addFolder("box");
+      boxFolder.add(ctrlObj, "boxWidth", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+      boxFolder.add(ctrlObj, "boxHeight", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+      boxFolder.add(ctrlObj, "boxDepth", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+      boxFolder.add(ctrlObj, "boxWidthSegments", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+      boxFolder.add(ctrlObj, "boxHeightSegments", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+      boxFolder.add(ctrlObj, "boxDepthSegments", 0, 20).onChange(function () {
+        scene.remove(box);
+        boxGeo = new THREE.BoxGeometry(
+          ctrlObj.boxWidth,
+          ctrlObj.boxHeight,
+          ctrlObj.boxDepth,
+          ctrlObj.boxWidthSegments,
+          ctrlObj.boxHeightSegments,
+          ctrlObj.boxDepthSegments
+        );
+        box = new THREE.Mesh(boxGeo, boxMat);
+        scene.add(box);
+        box.translateY(20);
+      });
+
+      var sphereFolder = ctrl.addFolder("sphere");
+      sphereFolder.add(ctrlObj, "sphereRadius", 0, 20).onChange(function () {
+        scene.remove(sphere);
+        sphereGeo = new THREE.SphereGeometry(
+          ctrlObj.sphereRadius,
+          ctrlObj.sphereWidthSegments,
+          ctrlObj.sphereHeightSegments,
+          ctrlObj.spherePhiStart,
+          ctrlObj.spherePhiLength,
+          ctrlObj.sphereThetaStart,
+          ctrlObj.sphereThetaLength
+        );
+        sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        scene.add(sphere);
+        sphere.translateX(20);
+        sphere.translateY(20);
+      });
+      sphereFolder
+        .add(ctrlObj, "sphereWidthSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+      sphereFolder
+        .add(ctrlObj, "sphereHeightSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+      sphereFolder
+        .add(ctrlObj, "spherePhiStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+      sphereFolder
+        .add(ctrlObj, "spherePhiLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+      sphereFolder
+        .add(ctrlObj, "sphereThetaStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+      sphereFolder
+        .add(ctrlObj, "sphereThetaLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(sphere);
+          sphereGeo = new THREE.SphereGeometry(
+            ctrlObj.sphereRadius,
+            ctrlObj.sphereWidthSegments,
+            ctrlObj.sphereHeightSegments,
+            ctrlObj.spherePhiStart,
+            ctrlObj.spherePhiLength,
+            ctrlObj.sphereThetaStart,
+            ctrlObj.sphereThetaLength
+          );
+          sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          scene.add(sphere);
+          sphere.translateX(20);
+          sphere.translateY(20);
+        });
+
+      var cylinderFolder = ctrl.addFolder("cylinder");
+      cylinderFolder
+        .add(ctrlObj, "cylinderRadiusTop", -10, 10)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder
+        .add(ctrlObj, "cylinderRadiusBottom", -10, 10)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder
+        .add(ctrlObj, "cylinderHeight", 0, 20)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder
+        .add(ctrlObj, "cylinderRadialSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder
+        .add(ctrlObj, "cylinderHeightSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder.add(ctrlObj, "cylinderOpenEnded").onChange(function () {
+        scene.remove(cylinder);
+        cylinderGeo = new THREE.CylinderGeometry(
+          ctrlObj.cylinderRadiusTop,
+          ctrlObj.cylinderRadiusBottom,
+          ctrlObj.cylinderHeight,
+          ctrlObj.cylinderRadialSegments,
+          ctrlObj.cylinderHeightSegments,
+          ctrlObj.cylinderOpenEnded,
+          ctrlObj.cylinderThetaStart,
+          ctrlObj.cylinderThetaLength
+        );
+        cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+        scene.add(cylinder);
+        cylinder.translateX(40);
+        cylinder.translateY(20);
+      });
+      cylinderFolder
+        .add(ctrlObj, "cylinderThetaStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+      cylinderFolder
+        .add(ctrlObj, "cylinderThetaLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(cylinder);
+          cylinderGeo = new THREE.CylinderGeometry(
+            ctrlObj.cylinderRadiusTop,
+            ctrlObj.cylinderRadiusBottom,
+            ctrlObj.cylinderHeight,
+            ctrlObj.cylinderRadialSegments,
+            ctrlObj.cylinderHeightSegments,
+            ctrlObj.cylinderOpenEnded,
+            ctrlObj.cylinderThetaStart,
+            ctrlObj.cylinderThetaLength
+          );
+          cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+          scene.add(cylinder);
+          cylinder.translateX(40);
+          cylinder.translateY(20);
+        });
+
+      var coneFolder = ctrl.addFolder("cone");
+      coneFolder.add(ctrlObj, "coneRadius", 0, 10).onChange(function () {
+        scene.remove(cone);
+        coneGeo = new THREE.ConeGeometry(
+          ctrlObj.coneRadius,
+          ctrlObj.coneHeight,
+          ctrlObj.coneRadialSegments,
+          ctrlObj.coneHeightSegments,
+          ctrlObj.coneOpenEnded,
+          ctrlObj.coneThetaStart,
+          ctrlObj.coneThetaLength
+        );
+        cone = new THREE.Mesh(coneGeo, coneMat);
+        scene.add(cone);
+        cone.translateX(60);
+        cone.translateY(20);
+      });
+      coneFolder.add(ctrlObj, "coneHeight", 0, 20).onChange(function () {
+        scene.remove(cone);
+        coneGeo = new THREE.ConeGeometry(
+          ctrlObj.coneRadius,
+          ctrlObj.coneHeight,
+          ctrlObj.coneRadialSegments,
+          ctrlObj.coneHeightSegments,
+          ctrlObj.coneOpenEnded,
+          ctrlObj.coneThetaStart,
+          ctrlObj.coneThetaLength
+        );
+        cone = new THREE.Mesh(coneGeo, coneMat);
+        scene.add(cone);
+        cone.translateX(60);
+        cone.translateY(20);
+      });
+      coneFolder
+        .add(ctrlObj, "coneRadialSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(cone);
+          coneGeo = new THREE.ConeGeometry(
+            ctrlObj.coneRadius,
+            ctrlObj.coneHeight,
+            ctrlObj.coneRadialSegments,
+            ctrlObj.coneHeightSegments,
+            ctrlObj.coneOpenEnded,
+            ctrlObj.coneThetaStart,
+            ctrlObj.coneThetaLength
+          );
+          cone = new THREE.Mesh(coneGeo, coneMat);
+          scene.add(cone);
+          cone.translateX(60);
+          cone.translateY(20);
+        });
+      coneFolder
+        .add(ctrlObj, "coneHeightSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(cone);
+          coneGeo = new THREE.ConeGeometry(
+            ctrlObj.coneRadius,
+            ctrlObj.coneHeight,
+            ctrlObj.coneRadialSegments,
+            ctrlObj.coneHeightSegments,
+            ctrlObj.coneOpenEnded,
+            ctrlObj.coneThetaStart,
+            ctrlObj.coneThetaLength
+          );
+          cone = new THREE.Mesh(coneGeo, coneMat);
+          scene.add(cone);
+          cone.translateX(60);
+          cone.translateY(20);
+        });
+      coneFolder.add(ctrlObj, "coneOpenEnded").onChange(function () {
+        scene.remove(cone);
+        coneGeo = new THREE.ConeGeometry(
+          ctrlObj.coneRadius,
+          ctrlObj.coneHeight,
+          ctrlObj.coneRadialSegments,
+          ctrlObj.coneHeightSegments,
+          ctrlObj.coneOpenEnded,
+          ctrlObj.coneThetaStart,
+          ctrlObj.coneThetaLength
+        );
+        cone = new THREE.Mesh(coneGeo, coneMat);
+        scene.add(cone);
+        cone.translateX(60);
+        cone.translateY(20);
+      });
+      coneFolder
+        .add(ctrlObj, "coneThetaStart", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(cone);
+          coneGeo = new THREE.ConeGeometry(
+            ctrlObj.coneRadius,
+            ctrlObj.coneHeight,
+            ctrlObj.coneRadialSegments,
+            ctrlObj.coneHeightSegments,
+            ctrlObj.coneOpenEnded,
+            ctrlObj.coneThetaStart,
+            ctrlObj.coneThetaLength
+          );
+          cone = new THREE.Mesh(coneGeo, coneMat);
+          scene.add(cone);
+          cone.translateX(60);
+          cone.translateY(20);
+        });
+      coneFolder
+        .add(ctrlObj, "coneThetaLength", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(cone);
+          coneGeo = new THREE.ConeGeometry(
+            ctrlObj.coneRadius,
+            ctrlObj.coneHeight,
+            ctrlObj.coneRadialSegments,
+            ctrlObj.coneHeightSegments,
+            ctrlObj.coneOpenEnded,
+            ctrlObj.coneThetaStart,
+            ctrlObj.coneThetaLength
+          );
+          cone = new THREE.Mesh(coneGeo, coneMat);
+          scene.add(cone);
+          cone.translateX(60);
+          cone.translateY(20);
+        });
+
+      var torusFolder = ctrl.addFolder("torus");
+      torusFolder.add(ctrlObj, "torusRadius", 0, 20).onChange(function () {
+        scene.remove(torus);
+        torusGeo = new THREE.TorusGeometry(
+          ctrlObj.torusRadius,
+          ctrlObj.torusTube,
+          ctrlObj.torusRadialSegments,
+          ctrlObj.torusTubularSegments,
+          ctrlObj.torusArc
+        );
+        torus = new THREE.Mesh(torusGeo, torusMat);
+        scene.add(torus);
+        torus.translateY(40);
+      });
+      torusFolder.add(ctrlObj, "torusTube", 0, 10).onChange(function () {
+        scene.remove(torus);
+        torusGeo = new THREE.TorusGeometry(
+          ctrlObj.torusRadius,
+          ctrlObj.torusTube,
+          ctrlObj.torusRadialSegments,
+          ctrlObj.torusTubularSegments,
+          ctrlObj.torusArc
+        );
+        torus = new THREE.Mesh(torusGeo, torusMat);
+        scene.add(torus);
+        torus.translateY(40);
+      });
+      torusFolder
+        .add(ctrlObj, "torusRadialSegments", 0, 20)
+        .onChange(function () {
+          scene.remove(torus);
+          torusGeo = new THREE.TorusGeometry(
+            ctrlObj.torusRadius,
+            ctrlObj.torusTube,
+            ctrlObj.torusRadialSegments,
+            ctrlObj.torusTubularSegments,
+            ctrlObj.torusArc
+          );
+          torus = new THREE.Mesh(torusGeo, torusMat);
+          scene.add(torus);
+          torus.translateY(40);
+        });
+      torusFolder
+        .add(ctrlObj, "torusTubularSegments", 0, 50)
+        .onChange(function () {
+          scene.remove(torus);
+          torusGeo = new THREE.TorusGeometry(
+            ctrlObj.torusRadius,
+            ctrlObj.torusTube,
+            ctrlObj.torusRadialSegments,
+            ctrlObj.torusTubularSegments,
+            ctrlObj.torusArc
+          );
+          torus = new THREE.Mesh(torusGeo, torusMat);
+          scene.add(torus);
+          torus.translateY(40);
+        });
+      torusFolder
+        .add(ctrlObj, "torusArc", 0, Math.PI * 2)
+        .onChange(function () {
+          scene.remove(torus);
+          torusGeo = new THREE.TorusGeometry(
+            ctrlObj.torusRadius,
+            ctrlObj.torusTube,
+            ctrlObj.torusRadialSegments,
+            ctrlObj.torusTubularSegments,
+            ctrlObj.torusArc
+          );
+          torus = new THREE.Mesh(torusGeo, torusMat);
+          scene.add(torus);
+          torus.translateY(40);
+        });
+
+      var torusKnotFolder = ctrl.addFolder("torusKnot");
+      torusKnotFolder
+        .add(ctrlObj, "torusKnotRadius", 0, 10)
+        .onChange(function () {
+          scene.remove(torusKnot);
+          torusKnotGeo = new THREE.TorusKnotGeometry(
+            ctrlObj.torusKnotRadius,
+            ctrlObj.torusKnotTube,
+            ctrlObj.torusKnotTubularSegments,
+            ctrlObj.torusKnotRadialSegments,
+            Math.round(ctrlObj.torusKnotP),
+            Math.round(ctrlObj.torusKnotQ)
+          );
+          torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+          scene.add(torusKnot);
+          torusKnot.translateY(40);
+          torusKnot.translateX(20);
+        });
+      torusKnotFolder.add(ctrlObj, "torusKnotTube", 0, 5).onChange(function () {
+        scene.remove(torusKnot);
+        torusKnotGeo = new THREE.TorusKnotGeometry(
+          ctrlObj.torusKnotRadius,
+          ctrlObj.torusKnotTube,
+          ctrlObj.torusKnotTubularSegments,
+          ctrlObj.torusKnotRadialSegments,
+          Math.round(ctrlObj.torusKnotP),
+          Math.round(ctrlObj.torusKnotQ)
+        );
+        torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+        scene.add(torusKnot);
+        torusKnot.translateY(40);
+        torusKnot.translateX(20);
+      });
+      torusKnotFolder
+        .add(ctrlObj, "torusKnotTubularSegments", 0, 200)
+        .onChange(function () {
+          scene.remove(torusKnot);
+          torusKnotGeo = new THREE.TorusKnotGeometry(
+            ctrlObj.torusKnotRadius,
+            ctrlObj.torusKnotTube,
+            ctrlObj.torusKnotTubularSegments,
+            ctrlObj.torusKnotRadialSegments,
+            Math.round(ctrlObj.torusKnotP),
+            Math.round(ctrlObj.torusKnotQ)
+          );
+          torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+          scene.add(torusKnot);
+          torusKnot.translateY(40);
+          torusKnot.translateX(20);
+        });
+      torusKnotFolder
+        .add(ctrlObj, "torusKnotRadialSegments", 0, 40)
+        .onChange(function () {
+          scene.remove(torusKnot);
+          torusKnotGeo = new THREE.TorusKnotGeometry(
+            ctrlObj.torusKnotRadius,
+            ctrlObj.torusKnotTube,
+            ctrlObj.torusKnotTubularSegments,
+            ctrlObj.torusKnotRadialSegments,
+            Math.round(ctrlObj.torusKnotP),
+            Math.round(ctrlObj.torusKnotQ)
+          );
+          torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+          scene.add(torusKnot);
+          torusKnot.translateY(40);
+          torusKnot.translateX(20);
+        });
+      torusKnotFolder.add(ctrlObj, "torusKnotP", 0, 10).onChange(function () {
+        scene.remove(torusKnot);
+        torusKnotGeo = new THREE.TorusKnotGeometry(
+          ctrlObj.torusKnotRadius,
+          ctrlObj.torusKnotTube,
+          ctrlObj.torusKnotTubularSegments,
+          ctrlObj.torusKnotRadialSegments,
+          Math.round(ctrlObj.torusKnotP),
+          Math.round(ctrlObj.torusKnotQ)
+        );
+        torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+        scene.add(torusKnot);
+        torusKnot.translateY(40);
+        torusKnot.translateX(20);
+      });
+      torusKnotFolder.add(ctrlObj, "torusKnotQ", 0, 10).onChange(function () {
+        scene.remove(torusKnot);
+        torusKnotGeo = new THREE.TorusKnotGeometry(
+          ctrlObj.torusKnotRadius,
+          ctrlObj.torusKnotTube,
+          ctrlObj.torusKnotTubularSegments,
+          ctrlObj.torusKnotRadialSegments,
+          Math.round(ctrlObj.torusKnotP),
+          Math.round(ctrlObj.torusKnotQ)
+        );
+        torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+        scene.add(torusKnot);
+        torusKnot.translateY(40);
+        torusKnot.translateX(20);
+      });
+
+      var icosahedronFolder = ctrl.addFolder("icosahedron");
+      icosahedronFolder
+        .add(ctrlObj, "icosahedronRadius", 0, 20)
+        .onChange(function () {
+          scene.remove(icosahedron);
+          icosahedronGeo = new THREE.IcosahedronGeometry(
+            ctrlObj.icosahedronRadius,
+            ctrlObj.icosahedronDetail
+          );
+          icosahedron = new THREE.Mesh(icosahedronGeo, icosahedronMat);
+          scene.add(icosahedron);
+          icosahedron.translateY(60);
+        });
+      icosahedronFolder
+        .add(ctrlObj, "icosahedronDetail", 0, 5)
+        .onChange(function () {
+          scene.remove(icosahedron);
+          icosahedronGeo = new THREE.IcosahedronGeometry(
+            ctrlObj.icosahedronRadius,
+            ctrlObj.icosahedronDetail
+          );
+          icosahedron = new THREE.Mesh(icosahedronGeo, icosahedronMat);
+          scene.add(icosahedron);
+          icosahedron.translateY(60);
+        });
+
+      var tetrahedronFolder = ctrl.addFolder("tetrahedron");
+      tetrahedronFolder
+        .add(ctrlObj, "tetrahedronRadius", 0, 20)
+        .onChange(function () {
+          scene.remove(tetrahedron);
+          tetrahedronGeo = new THREE.TetrahedronGeometry(
+            ctrlObj.tetrahedronRadius,
+            ctrlObj.tetrahedronDetail
+          );
+          tetrahedron = new THREE.Mesh(tetrahedronGeo, tetrahedronMat);
+          scene.add(tetrahedron);
+          tetrahedron.translateY(60);
+          tetrahedron.translateX(20);
+        });
+      tetrahedronFolder
+        .add(ctrlObj, "tetrahedronDetail", 0, 5)
+        .onChange(function () {
+          scene.remove(tetrahedron);
+          tetrahedronGeo = new THREE.TetrahedronGeometry(
+            ctrlObj.tetrahedronRadius,
+            ctrlObj.tetrahedronDetail
+          );
+          tetrahedron = new THREE.Mesh(tetrahedronGeo, tetrahedronMat);
+          scene.add(tetrahedron);
+          tetrahedron.translateY(60);
+          tetrahedron.translateX(20);
+        });
+
+      var octahedronFolder = ctrl.addFolder("octahedron");
+      octahedronFolder
+        .add(ctrlObj, "octahedronRadius", 0, 20)
+        .onChange(function () {
+          scene.remove(octahedron);
+          octahedronGeo = new THREE.OctahedronGeometry(
+            ctrlObj.octahedronRadius,
+            ctrlObj.octahedronDetail
+          );
+          octahedron = new THREE.Mesh(octahedronGeo, octahedronMat);
+          scene.add(octahedron);
+          octahedron.translateY(60);
+          octahedron.translateX(40);
+        });
+      octahedronFolder
+        .add(ctrlObj, "octahedronDetail", 0, 5)
+        .onChange(function () {
+          scene.remove(octahedron);
+          octahedronGeo = new THREE.OctahedronGeometry(
+            ctrlObj.octahedronRadius,
+            ctrlObj.octahedronDetail
+          );
+          octahedron = new THREE.Mesh(octahedronGeo, octahedronMat);
+          scene.add(octahedron);
+          octahedron.translateY(60);
+          octahedron.translateX(40);
+        });
+
+      var dodecahedronFolder = ctrl.addFolder("dodecahedron");
+      dodecahedronFolder
+        .add(ctrlObj, "dodecahedronRadius", 0, 20)
+        .onChange(function () {
+          scene.remove(dodecahedron);
+          dodecahedronGeo = new THREE.DodecahedronGeometry(
+            ctrlObj.dodecahedronRadius,
+            ctrlObj.dodecahedronDetail
+          );
+          dodecahedron = new THREE.Mesh(dodecahedronGeo, dodecahedronMat);
+          scene.add(dodecahedron);
+          dodecahedron.translateY(60);
+          dodecahedron.translateX(60);
+        });
+      dodecahedronFolder
+        .add(ctrlObj, "dodecahedronDetail", 0, 5)
+        .onChange(function () {
+          scene.remove(dodecahedron);
+          dodecahedronGeo = new THREE.DodecahedronGeometry(
+            ctrlObj.dodecahedronRadius,
+            ctrlObj.dodecahedronDetail
+          );
+          dodecahedron = new THREE.Mesh(dodecahedronGeo, dodecahedronMat);
+          scene.add(dodecahedron);
+          dodecahedron.translateY(60);
+          dodecahedron.translateX(60);
+        });
+
+      //lambert光源的颜色会应用到整个场景中的对象，不能作为唯一的光源来使用
+      var ambientLight = new THREE.AmbientLight(0xcccccc);
+      // scene.add(ambientLight);
+
+      //加入能产生阴影的光源
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(-60, 30, -65);
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
+      spotLight.shadow.camera.far = 130;
+      spotLight.shadow.camera.near = 40;
+      // scene.add(spotLight);
+
+      //创建pointLight
+      //光照颜色，光照强度，光源到光照强度为0的位置，沿着光照距离的衰退量
+      const pointLight = new THREE.PointLight(0xffffff, 6, 160);
+      pointLight.position.set(0, 0, 5);
+      // scene.add(pointLight);
+
+      //创建directionalLight平行光
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
+      //让平行光产生阴影
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      directionalLight.position.set(20, 20, 20);
+      // scene.add(directionalLight);
+
+      //渲染页面
+      renderScene();
+
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+
+      function init() {
+        //场景对象
+        var scene = new THREE.Scene();
+
+        var camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+
+        //渲染器
+        var render = new THREE.WebGLRenderer();
+        render.setClearColor(new THREE.Color(0x000000));
+        render.setSize(window.innerWidth, window.innerHeight);
+        render.shadowMap.enabled = true;
+        document
+          .getElementById("puidu-webgl-output")
+          .appendChild(render.domElement);
+
+        //添加三维坐标轴
+        var axes = new THREE.AxesHelper(50);
+        // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+        scene.add(axes);
+
+        //设置机位
+        camera.position.x = 0;
+        camera.position.y = 0;
+        camera.position.z = 100;
+        camera.lookAt(scene.position);
+        scene.add(camera);
+
+        //鼠标移动
+        var controls = new OrbitControls(camera, render.domElement);
+        controls.update();
+      }
+    </script>
+  </body>
+</html>

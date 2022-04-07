@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { GLTFLoader } from "./libs/three.js/src/jsm/loaders/GLTFLoader.js";
+      import { RoughnessMipmapper } from "./libs/three.js/src/jsm/utils/RoughnessMipmapper.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { RGBELoader } from "./libs/three.js/src/jsm/loaders/RGBELoader.js";
+
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //渲染器
+      var render = new THREE.WebGLRenderer({ antialias: true }); //对渲染器的属性再继续调优
+      render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+
+      render.toneMapping = THREE.ACESFilmicToneMapping;
+      render.toneMappingExposure = 1;
+      render.setPixelRatio(window.devicePixelRatio);
+      render.outputEncoding = THREE.sRGBEncoding; //让场景灯光更真实
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //设置机位
+      camera.position.x = 0;
+      camera.position.y = 30;
+      camera.position.z = 50;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //加载GLTFLoader模型
+      const loader = new GLTFLoader();
+      loader.load("./assets/model/scene.gltf", function (gltf) {
+        //粗糙纹理
+        gltf.scene.traverse(function (child) {
+          if (child.isMesh) {
+            roughnessMipmapper.generateMipmaps(child.material);
+          }
+        });
+
+        scene.add(gltf.scene);
+        roughnessMipmapper.dispose();
+        renderScene();
+      });
+
+      //   加入高动态范围图像HDR;
+      var rgbeLoader = new RGBELoader();
+      rgbeLoader.load("./assets/model/textures/scene.hdr", function (texture) {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        scene.background = texture; //背景场景
+        scene.environment = texture; //场景环境属性
+        renderScene();
+      });
+
+      const roughnessMipmapper = new RoughnessMipmapper(render);
+      //   //加入光源
+      //   var ambientLight = new THREE.AmbientLight(0xffffff);
+      //   scene.add(ambientLight);
+      //   //加入光源
+      //   var spotLight = new THREE.SpotLight(0xffffff);
+      //   spotLight.position.set(0, 30, 60);
+      //   spotLight.castShadow = true;
+      //   spotLight.intensity = 0.6;
+      //   scene.add(spotLight);
+
+      //渲染页面
+      renderScene();
+
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+
+      function init() {
+        //场景对象
+      }
+    </script>
+  </body>
+</html>

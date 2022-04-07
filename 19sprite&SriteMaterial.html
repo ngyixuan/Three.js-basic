@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="myStats"></div>
+    <div id="puidu-webgl-output"></div>
+    <script type="module">
+      import * as THREE from "./libs/three.js/build/three.module.js";
+      import { OrbitControls } from "./libs/three.js/src/jsm/controls/OrbitControls.js";
+      import { createMultiMaterialObject } from "./libs/three.js/src/jsm/utils/SceneUtils.js";
+      import { OBJLoader } from "./libs/three.js/src/jsm/loaders/OBJLoader.js";
+      // Stats用于监测动画运行的帧数
+      import Stats from "./node_modules/stats.js/src/Stats.js";
+
+      //导入dat控制台
+      import dat from "./node_modules/dat.gui/build/dat.gui.module.js";
+
+      //场景对象
+      var scene = new THREE.Scene();
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      //设置机位
+      camera.position.x = -20;
+      camera.position.y = 20;
+      camera.position.z = 30;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      //渲染器
+      var render = new THREE.WebGLRenderer();
+      //   render.setClearColor(new THREE.Color(0x000000));
+      render.setSize(window.innerWidth, window.innerHeight);
+      render.shadowMap.enabled = true;
+      document
+        .getElementById("puidu-webgl-output")
+        .appendChild(render.domElement);
+
+      //添加三维坐标轴
+      var axes = new THREE.AxesHelper(50);
+      // axes.setColors(0x00ffff,0xffff00,0x00ffff)
+      scene.add(axes);
+
+      //光源
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(0, 30, 60);
+      spotLight.castShadow = true;
+      spotLight.intensity = 0.6;
+      scene.add(spotLight);
+
+      //控制台
+      var ctrlObj = {};
+
+      var ctrl = new dat.GUI();
+
+      //鼠标移动
+      var controls = new OrbitControls(camera, render.domElement);
+      controls.update();
+
+      //调用创建sprite
+      //   createSprite();
+
+      //创建点云效果
+      createPoints();
+
+      //渲染页面
+      renderScene();
+      //封装刷新页面的方法
+      function renderScene() {
+        //实时更新鼠标移动放大
+        controls.update();
+
+        requestAnimationFrame(renderScene);
+        render.render(scene, camera);
+      }
+
+      window.addEventListener("resize", onWindowResize, false);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix(); //手动更新像机的投影矩阵
+        render.setSize(window.innerWidth, window.innerHeight); //充值场景的渲染尺寸
+      }
+
+      //将texture加载到精灵图片
+      function getTexture() {
+        var texture = new THREE.TextureLoader().load(
+          "./assets/model/textures/sprite-sheet.jpg"
+        );
+        return texture;
+      }
+
+      //点云效果
+      function createPoints() {
+        var geo = new THREE.BufferGeometry();
+        var material = new THREE.PointsMaterial({
+          size: 2,
+          vertexColros: true,
+          color: 0xffffff,
+          map: getTexture(),
+        });
+
+        material.map.offset = new THREE.Vector2(0.2, 0); //z轴数量
+        material.map.repeat = new THREE.Vector2(1 / 4, 1 / 6);
+        material.depthTest = false;
+
+        var position = [];
+        var colors = [];
+        for (var x = -30; x < 30; x++) {
+          for (var y = -20; y < 20; y++) {
+            for (var z = -30; z < 30; z++) {
+              position.push(x * 4, y * 4, z * 40);
+              var clr = new THREE.Color(Math.random() * 0xffffff);
+              colors.push(clr.r, clr.g, clr.b);
+            }
+          }
+        }
+
+        geo.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(position, 3)
+        );
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+        var cloud = new THREE.Points(geo, material);
+        scene.add(cloud);
+      }
+
+      //创建精灵图片
+      function createSprite() {
+        for (var x = -30; x < 30; x++) {
+          for (var y = -20; y < 20; y++) {
+            for (var z = 0; z < 5; z++) {
+              var spriteMaterial = new THREE.SpriteMaterial({
+                opacity: 0.5,
+                transparent: false,
+                color: 0xffffff,
+                map: getTexture(),
+              });
+
+              spriteMaterial.map.offset = new THREE.Vector2(0.2 * (z % 5), 0); //z轴数量
+              spriteMaterial.map.repeat = new THREE.Vector2(1 / 4, 1 / 6);
+              spriteMaterial.depthTest = false;
+
+              var sprite = new THREE.Sprite(spriteMaterial);
+              sprite.position.set(x * 4, y * 4, z * 100);
+              scene.add(sprite);
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
